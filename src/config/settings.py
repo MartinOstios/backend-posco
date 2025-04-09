@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     SMTP_HOST: str | None = None
     EMAILS_FROM_EMAIL: str | None = None
     EMAILS_FROM_NAME: str | None = None
+    SMTP_PASSWORD: str | None = None
 
     OAUTH_ACCESS_TOKEN: str
     OAUTH_REFRESH_TOKEN: str

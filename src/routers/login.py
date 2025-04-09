@@ -12,11 +12,12 @@ from src.config.settings import settings
 from src.config.security import get_password_hash
 from src.models.utils import Message, NewPassword, Token
 from src.models.employee import Employee, EmployeeRead
-from src.utils import (
-    generate_password_reset_token,
+from src.utils.email import (
+    generate_reset_code,
+    save_reset_token,
+    verify_reset_token,
     generate_reset_password_email,
     send_email,
-    verify_password_reset_token,
 )
 
 router = APIRouter()
@@ -55,7 +56,7 @@ def test_token(current_employee: CurrentUser) -> Any:
 @router.post("/password-recovery/{email}")
 def recover_password(email: str, session: SessionDep) -> Message:
     """
-    Password Recovery
+    Password Recovery - Envía un código numérico de 4 dígitos al correo del empleado
     """
     employee = crud.get_by_email(session=session, email=email)
 
@@ -64,27 +65,41 @@ def recover_password(email: str, session: SessionDep) -> Message:
             status_code=404,
             detail="El empleado con este correo no existe en el sistema.",
         )
-    password_reset_token = generate_password_reset_token(email=email)
+    
+    # Generar código numérico de 4 dígitos
+    reset_code = generate_reset_code()
+    
+    # Guardar el token en la base de datos
+    save_reset_token(session, email, reset_code)
+    
+    # Generar el correo electrónico
     email_data = generate_reset_password_email(
-        email_to=employee.email, email=email, token=password_reset_token
+        email_to=employee.email, 
+        email=email, 
+        token=reset_code
     )
+    
+    # Enviar el correo
     send_email(
-        email_to=employee.email,
-        subject=email_data.subject,
-        html_content=email_data.html_content,
+        to_email=employee.email,
+        subject=email_data["subject"],
+        html_content=email_data["html_content"],
     )
+    
     return Message(message="Correo de recuperación de contraseña enviado")
 
 
 @router.post("/reset-password/")
 def reset_password(session: SessionDep, body: NewPassword) -> Message:
     """
-    Reset password
+    Reset password - Verifica el código numérico y establece la nueva contraseña
     """
-    email = verify_password_reset_token(token=body.token)
-    if not email:
-        raise HTTPException(status_code=400, detail="Token inválido")
-    employee = crud.get_by_email(session=session, email=email)
+    # Verificar que el código sea válido
+    if not verify_reset_token(session, body.email, body.token):
+        raise HTTPException(status_code=400, detail="Código inválido o expirado")
+    
+    # Obtener el empleado
+    employee = crud.get_by_email(session=session, email=body.email)
     if not employee:
         raise HTTPException(
             status_code=404,
@@ -92,10 +107,14 @@ def reset_password(session: SessionDep, body: NewPassword) -> Message:
         )
     elif not employee.is_active:
         raise HTTPException(status_code=400, detail="Usuario inactivo")
+    
+    # Cambiar la contraseña
     hashed_password = get_password_hash(password=body.new_password)
+    print(body.new_password)
     employee.hashed_password = hashed_password
     session.add(employee)
     session.commit()
+    
     return Message(message="Contraseña actualizada exitosamente")
 
 

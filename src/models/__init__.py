@@ -10,6 +10,7 @@ from .invoice import Invoice, InvoiceCreate, InvoiceRead, PaymentMethod
 from .sale import Sale, SaleCreate, SaleRead
 from .client import Client, ClientCreate, ClientRead
 from .notification_token import NotificationToken, NotificationTokenCreate, NotificationTokenUpdate, NotificationTokenPublic, NotificationTokensPublic
+from .reset_token import PasswordResetToken
 
 __all__ = [
     "PermissionHasRole",
@@ -23,5 +24,6 @@ __all__ = [
     "Invoice", "InvoiceCreate", "InvoiceRead", "PaymentMethod",
     "Sale", "SaleCreate", "SaleRead",
     "Client", "ClientCreate", "ClientRead",
-    "NotificationToken", "NotificationTokenCreate", "NotificationTokenUpdate", "NotificationTokenPublic", "NotificationTokensPublic"
+    "NotificationToken", "NotificationTokenCreate", "NotificationTokenUpdate", "NotificationTokenPublic", "NotificationTokensPublic",
+    "PasswordResetToken"
 ]

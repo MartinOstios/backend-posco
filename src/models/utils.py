@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 
 
 # Generic message
@@ -19,5 +19,6 @@ class TokenPayload(BaseModel):
 
 
 class NewPassword(BaseModel):
+    email: EmailStr
     token: str
     new_password: str = Field(min_length=8, max_length=40)
